@@ -39,14 +39,14 @@ class DiscordChatter: JavaPlugin(), Listener {
                             return
                         }
                     } catch (err: CommandException) {
-                        sendMessage("[error] unknown error")
+                        sendMessage("[error] unknown error: ${err.message}")
                         return
                     }
 
                     sendMessage("[success]\n${sender.getMessage()}")
                 }
             }
-            server.scheduler.runTaskAsynchronously(this@DiscordChatter, task)
+            server.scheduler.runTask(this@DiscordChatter, task)
         }
 
         server.pluginManager.registerEvents(this, this)
