@@ -12,6 +12,7 @@ import discord4j.core.event.domain.message.MessageCreateEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import me.tsukuba.soho.plugin.chat.DiscordChatter
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
 import org.bukkit.entity.Player
@@ -70,6 +71,14 @@ class DiscordBot(
             client.eventDispatcher.on(object: ReactiveEventAdapter () {
                 override fun onMessageCreate(event: MessageCreateEvent): Publisher<*> {
                     if (event.message.channelId != channel.id) {
+                        return Mono.empty<Void>()
+                    }
+
+                    if (event.message.author.isEmpty) {
+                        return Mono.empty<Void>()
+                    }
+
+                    if (event.message.author.get().id.asLong() == DiscordChatter.botId) {
                         return Mono.empty<Void>()
                     }
 
