@@ -1,5 +1,6 @@
 name: DiscordChatter
-version: 0.0.1
+version: 0.0.3
 main: me.tsukuba.soho.plugin.chat.DiscordChatter
 api-version: '1.17'
 author: frodo821
+description: Minecraft multiplayer server management utility over discord server
