@@ -6,7 +6,7 @@
 
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin.
-    id 'org.jetbrains.kotlin.jvm' version '1.5.30'
+    id 'org.jetbrains.kotlin.jvm' version '1.6.10'
 
     // Apply the java-library plugin for API and implementation separation.
     id 'java-library'
@@ -15,7 +15,6 @@ plugins {
 repositories {
     // Use jcenter for resolving dependencies.
     // You can declare any Maven/Ivy/file repository here.
-    jcenter()
     mavenCentral()
     maven {
         url 'https://papermc.io/repo/repository/maven-public/'
@@ -25,23 +24,27 @@ repositories {
 dependencies {
     // Align versions of all Kotlin components
     implementation platform('org.jetbrains.kotlin:kotlin-bom')
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0'
 
     // Use the Kotlin JDK 8 standard library.
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.21'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.10'
 
-    implementation "com.discord4j:discord4j-core:3.1.7"
+    implementation 'com.discord4j:discord4j-core:3.2.2'
 
-    compileOnly 'io.papermc.paper:paper-api:1.17.1-R0.1-SNAPSHOT'
+    compileOnly 'io.papermc.paper:paper-api:1.18.2-R0.1-SNAPSHOT'
 
     // Use the Kotlin test library.
-    testImplementation 'org.jetbrains.kotlin:kotlin-test:1.5.21'
+    testImplementation 'org.jetbrains.kotlin:kotlin-test:1.6.0'
 
     // Use the Kotlin JUnit integration.
-    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit:1.5.21'
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit:1.6.10'
 }
 
 configurations.implementation.setCanBeResolved(true)
+
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+}
 
 jar {
     from {
