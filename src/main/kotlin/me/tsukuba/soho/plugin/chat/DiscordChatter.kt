@@ -8,6 +8,7 @@ import org.bukkit.event.Listener
 import org.bukkit.plugin.PluginLogger
 import org.bukkit.plugin.java.JavaPlugin
 
+@Suppress("unused")
 class DiscordChatter: JavaPlugin(), Listener {
     private lateinit var bot: DiscordBot
     private val logger = PluginLogger(this)
@@ -39,7 +40,7 @@ class DiscordChatter: JavaPlugin(), Listener {
                             return
                         }
                     } catch (err: CommandException) {
-                        sendMessage("[error] unknown error: ${err.message}")
+                        sendMessage("[error] unknown error: ${err.message}\n${err.stackTraceToString()}")
                         return
                     }
 
@@ -57,6 +58,7 @@ class DiscordChatter: JavaPlugin(), Listener {
     }
 
     @EventHandler
+    @Suppress("unused")
     fun onChat(event: AsyncChatEvent) {
         bot.sendMessage(event.player, event.message())
     }
