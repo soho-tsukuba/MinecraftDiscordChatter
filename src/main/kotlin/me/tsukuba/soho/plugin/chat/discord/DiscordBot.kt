@@ -5,6 +5,7 @@ package me.tsukuba.soho.plugin.chat.discord
 import discord4j.common.util.Snowflake
 import discord4j.core.DiscordClient
 import discord4j.core.GatewayDiscordClient
+import discord4j.core.`object`.entity.Message
 import discord4j.core.`object`.entity.channel.TextChannel
 import discord4j.core.event.ReactiveEventAdapter
 import discord4j.core.event.domain.message.MessageCreateEvent
@@ -19,7 +20,7 @@ import org.reactivestreams.Publisher
 import reactor.core.publisher.Mono
 import java.util.logging.Level
 
-typealias CommandHandler = DiscordBot.(cmd: String) -> Unit
+typealias CommandHandler = DiscordBot.(message: Message, commandPermission: Boolean) -> Unit
 
 class DiscordBot(
     token: String,
@@ -68,11 +69,11 @@ class DiscordBot(
         if (roleId != null) {
             client.eventDispatcher.on(object: ReactiveEventAdapter () {
                 override fun onMessageCreate(event: MessageCreateEvent): Publisher<*> {
-                    logger.info("message received: ${event.message.data.content()}")
-
-                    if (event.message.data.mentions().all { it.id().asLong() != 883677891844517898L }) {
+                    if (event.message.channelId != channel.id) {
                         return Mono.empty<Void>()
                     }
+
+                    logger.info("message received: ${event.message.content}")
 
                     val hasPermission = event.message.data.member().run {
                         if (isAbsent) {
@@ -83,25 +84,8 @@ class DiscordBot(
                             it.asLong() == roleId.asLong()
                         }
                     }
-                    if (!hasPermission) {
-                        return channel.createMessage("You have no permission to run the command.")
-                    }
 
-                    logger.info(
-                        "User (${
-                            event.message.userData.username()
-                        }) trying to execute command from Discord: ${
-                            event.message.content
-                        }"
-                    )
-
-                    handler(
-                        event.message
-                            .data
-                            .content()
-                            .replace(Regex("<@![0-9]+>"), "")
-                            .trim()
-                    )
+                    handler(event.message, hasPermission)
 
                     return Mono.empty<Void>()
                 }
