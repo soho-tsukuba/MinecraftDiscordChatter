@@ -1,5 +1,6 @@
 package me.tsukuba.soho.plugin.chat
 
+import net.kyori.adventure.text.Component
 import org.bukkit.Server
 import org.bukkit.command.CommandSender
 import org.bukkit.permissions.*
@@ -141,6 +142,10 @@ class DiscordCommandSender(private val _server: Server, private val defaultPlugi
 
     override fun spigot(): CommandSender.Spigot {
         TODO("Not yet implemented")
+    }
+
+    override fun name(): Component {
+        return Component.text(name)
     }
 
     fun getMessage(): String = message
