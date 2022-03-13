@@ -25,7 +25,7 @@ class DiscordBot(
     token: String,
     private val channelId: Long,
     private val logger: PluginLogger,
-    private val handler: CommandHandler? = null) {
+    private val handler: CommandHandler) {
 
     private var _client: GatewayDiscordClient? = null
     private val client: GatewayDiscordClient get() {
@@ -65,7 +65,7 @@ class DiscordBot(
 
         logger.info("$roleId, $handler")
 
-        if (roleId != null && handler != null) {
+        if (roleId != null) {
             client.eventDispatcher.on(object: ReactiveEventAdapter () {
                 override fun onMessageCreate(event: MessageCreateEvent): Publisher<*> {
                     logger.info("message received: ${event.message.data.content()}")
@@ -95,7 +95,7 @@ class DiscordBot(
                         }"
                     )
 
-                    handler!!(
+                    handler(
                         event.message
                             .data
                             .content()
@@ -123,7 +123,7 @@ class DiscordBot(
                     return@withContext
                 }
 
-                val msg = "[${fromUser.customName ?: fromUser.name}] ${message.content()}"
+                val msg = "[${fromUser.name}] ${message.content()}"
 
                 channel.restChannel.createMessage(msg).block()
                 logger.info("message sent: $msg")
