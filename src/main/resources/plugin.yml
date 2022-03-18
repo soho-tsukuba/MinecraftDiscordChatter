@@ -1,5 +1,5 @@
 name: DiscordChatter
-version: 0.0.4
+version: 1.0.0
 main: me.tsukuba.soho.plugin.chat.DiscordChatter
 api-version: '1.18'
 author: frodo821
