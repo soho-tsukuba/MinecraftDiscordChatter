@@ -1,11 +1,11 @@
 package me.tsukuba.soho.plugin.chat.map
 
 import org.bukkit.Material
-import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.Color
+import org.bukkit.configuration.ConfigurationSection
 
 
-fun initializeColorMap(config: FileConfiguration) {
+fun initializeColorMap(config: ConfigurationSection) {
     val maps = config.getConfigurationSection("maps") ?: config.createSection("maps")
     val colors = maps.getConfigurationSection("colors") ?: maps.createSection("colors")
 
