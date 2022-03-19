@@ -54,14 +54,19 @@ class MapRenderer(maps: ConfigurationSection, rootPath: Path) {
         val centerAt = arrayOf(center.x, center.z)
         val at = arrayOf(centerAt[0], centerAt[1])
         val dir = arrayOf(1, 0)
+        var stop = true
 
         logger.info("collecting chunks")
 
         while (chunks < world.chunkCount) {
-            if (!world.isChunkGenerated(at[0], at[1])) {
-                continue
+            if (world.isChunkGenerated(at[0], at[1])) {
+                logger.info(
+                    "found generated chunk at (${at[0]}, ${at[1]}) / ${chunks + 1} of max ${world.chunkCount} chunks"
+                )
+                yield(world.getChunkAt(at[0], at[1]))
+                stop = false
+                chunks++
             }
-            yield(world.getChunkAt(at[0], at[1]))
 
             if (
                 (at[0] + dir[0] - centerAt[0]).absoluteValue == boundary ||
@@ -69,6 +74,10 @@ class MapRenderer(maps: ConfigurationSection, rootPath: Path) {
             ) {
                 when {
                     dir[0] == 1 -> {
+                        if (stop) {
+                            break
+                        }
+                        stop = true
                         boundary++
                         dir[0] = 0
                         dir[1] = -1
@@ -89,7 +98,6 @@ class MapRenderer(maps: ConfigurationSection, rootPath: Path) {
             }
             at[0] += dir[0]
             at[1] += dir[1]
-            chunks++
         }
 
         logger.info("$chunks of chunks collected")
