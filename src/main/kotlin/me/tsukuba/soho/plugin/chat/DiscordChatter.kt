@@ -22,6 +22,7 @@ import org.bukkit.event.server.ServerLoadEvent
 import org.bukkit.plugin.PluginLogger
 import org.bukkit.plugin.java.JavaPlugin
 import java.lang.Runnable
+import java.nio.file.Path
 import java.text.DateFormat
 import java.util.*
 import kotlin.io.path.*
@@ -40,16 +41,19 @@ class DiscordChatter: JavaPlugin(), Listener {
     private val props = Properties()
     private var rcon: RemoteConsoleClient? = null
     private lateinit var mapRenderer: MapRenderer
+    private val serverPath: Path
 
     init {
         try {
             val path = javaClass.protectionDomain.codeSource.location.toURI().toPath()
 
-            val propsPath = (if (path.extension == "jar") {
+            serverPath = (if (path.extension == "jar") {
                 path.parent.parent
             } else {
                 path.parent.resolve("../".repeat(javaClass.packageName.split('.').size))
-            }).resolve("server.properties")
+            })
+
+            val propsPath = serverPath.resolve("server.properties")
 
             if (propsPath.exists() && propsPath.isRegularFile()) {
                 val file = propsPath.toFile()
@@ -66,6 +70,7 @@ class DiscordChatter: JavaPlugin(), Listener {
             }
         } catch (err: java.lang.Exception) {
             logger.warning("cannot get library path because of security reason: ${err.localizedMessage}")
+            throw err
         }
     }
 
@@ -85,7 +90,7 @@ class DiscordChatter: JavaPlugin(), Listener {
         )
         mapRenderer = MapRenderer(
             config.getConfigurationSection("map_image") ?: config.createSection("map_image"),
-            Path(file.path).parent.parent
+            serverPath
         )
         saveConfig()
 
