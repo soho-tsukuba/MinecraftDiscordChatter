@@ -8,7 +8,8 @@ import discord4j.core.`object`.entity.Message
 import discord4j.core.`object`.entity.channel.TextChannel
 import discord4j.core.event.ReactiveEventAdapter
 import discord4j.core.event.domain.message.MessageCreateEvent
-import discord4j.core.spec.GuildMemberEditSpec
+import discord4j.core.spec.EmbedCreateSpec
+import discord4j.core.spec.MessageCreateSpec
 import discord4j.gateway.intent.Intent
 import discord4j.gateway.intent.IntentSet
 import kotlinx.coroutines.*
@@ -16,9 +17,10 @@ import me.tsukuba.soho.plugin.chat.DiscordChatter
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
 import org.bukkit.entity.Player
-import org.bukkit.plugin.PluginLogger
 import org.reactivestreams.Publisher
 import reactor.core.publisher.Mono
+import java.io.File
+import java.util.*
 import java.util.logging.Level
 
 typealias CommandHandler = DiscordBot.(message: Message, commandPermission: Boolean) -> Unit
@@ -185,6 +187,26 @@ class DiscordBot(
 
             channel.restChannel.createMessage(msg).block()
         }
+    }
+
+    suspend fun uploadImage(img: File): Unit = withContext(Dispatchers.IO) {
+        val lastMod = DiscordChatter.dateFormatter.format(Date(img.lastModified()))
+
+        val message: MessageCreateSpec = MessageCreateSpec
+            .builder()
+            .addFile(img.name, img.inputStream())
+            .addEmbed(
+                EmbedCreateSpec
+                    .builder()
+                    .title("オーバーワールドのマップ (generated at ${lastMod})")
+                    .image("attachment://${img.name}")
+                    .build()
+            )
+            .build()
+
+        channel.restChannel.createMessage(
+            message.asRequest()
+        ).block()
     }
 
     suspend fun updateNickname(name: String): Unit = withContext(Dispatchers.IO) {

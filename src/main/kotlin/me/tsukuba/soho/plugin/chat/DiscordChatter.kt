@@ -6,13 +6,15 @@ import kotlinx.coroutines.*
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.event.player.PlayerKickEvent
 import me.tsukuba.soho.plugin.chat.discord.DiscordBot
+import me.tsukuba.soho.plugin.chat.map.MapRenderer
 import me.tsukuba.soho.plugin.chat.rcon.RemoteConsoleClient
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.BanList
-import org.bukkit.configuration.file.FileConfiguration
+import org.bukkit.World
+import org.bukkit.WorldType
 import org.bukkit.entity.Player
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
@@ -20,6 +22,7 @@ import org.bukkit.event.server.ServerLoadEvent
 import org.bukkit.plugin.PluginLogger
 import org.bukkit.plugin.java.JavaPlugin
 import java.lang.Runnable
+import java.nio.file.Path
 import java.text.DateFormat
 import java.util.*
 import kotlin.io.path.*
@@ -37,16 +40,20 @@ class DiscordChatter: JavaPlugin(), Listener {
     val nickname: String? get() = _nickname
     private val props = Properties()
     private var rcon: RemoteConsoleClient? = null
+    private lateinit var mapRenderer: MapRenderer
+    private val serverPath: Path
 
     init {
         try {
             val path = javaClass.protectionDomain.codeSource.location.toURI().toPath()
 
-            val propsPath = (if (path.extension == "jar") {
+            serverPath = (if (path.extension == "jar") {
                 path.parent.parent
             } else {
                 path.parent.resolve("../".repeat(javaClass.packageName.split('.').size))
-            }).resolve("server.properties")
+            })
+
+            val propsPath = serverPath.resolve("server.properties")
 
             if (propsPath.exists() && propsPath.isRegularFile()) {
                 val file = propsPath.toFile()
@@ -63,13 +70,14 @@ class DiscordChatter: JavaPlugin(), Listener {
             }
         } catch (err: java.lang.Exception) {
             logger.warning("cannot get library path because of security reason: ${err.localizedMessage}")
+            throw err
         }
     }
 
     companion object {
         const val botId = 883677891844517898L
         val commandMap = mutableMapOf<String, CommandHandle>()
-        private val dateFormatter = DateFormat.getDateInstance(DateFormat.FULL, Locale.JAPAN)
+        val dateFormatter: DateFormat = DateFormat.getDateInstance(DateFormat.FULL, Locale.JAPAN)
     }
 
     override fun onEnable() {
@@ -79,6 +87,10 @@ class DiscordChatter: JavaPlugin(), Listener {
                 "channel_id" to null,
                 "nickname" to null
             )
+        )
+        mapRenderer = MapRenderer(
+            config.getConfigurationSection("map_image") ?: config.createSection("map_image"),
+            serverPath
         )
         saveConfig()
 
@@ -326,6 +338,52 @@ class DiscordChatter: JavaPlugin(), Listener {
                     CoroutineScope(Dispatchers.Default).launch {
                         val resp = console.command(it.joinToString(" "))
                         bot.sendMessage(resp.replace(Regex("§\\w"), ""))
+                    }
+                }
+            }
+        }
+        commandMap["maps"] = {
+            when(it.firstOrNull()) {
+                null -> {
+                    bot.sendMessage("""
+                        使用方法: <@!${botId}> maps <generate | list | get>
+                          現在のワールドにおける、オーバーワールドの生成済みマップ全体の画像を生成/取得します。""".trimIndent())
+                }
+                "generate" -> {
+                    val world = server.worlds.find { world -> world.environment == World.Environment.NORMAL }
+                    if (world == null) {
+                        bot.sendMessage("現在のワールドには生成済みのオーバーワードがありません。")
+                    } else {
+                        bot.sendMessage("マップを生成しています...")
+                        CoroutineScope(Dispatchers.Default).launch {
+                            bot.uploadImage(mapRenderer.renderMap(world).toFile())
+                            bot.sendMessage("マップの生成が完了しました。")
+                        }
+                    }
+                }
+                "list" -> {
+                    val files = mapRenderer
+                        .dataPath
+                        .listDirectoryEntries()
+                        .filter { path -> path.isRegularFile() && path.extension == "png" }
+                        .joinToString("\n") {
+                                path -> "- ${path.nameWithoutExtension} (${path.fileSize() / 1024}kB)"
+                        }
+                    bot.sendMessage(
+                        "それぞれの生成された画像を見るには、<@!${botId}> maps get <name [name1...]> を利用してください。\n\n$files"
+                    )
+                }
+                "get" -> {
+                    val names = it.drop(1)
+                    CoroutineScope(Dispatchers.Default).launch {
+                        for (name in names) {
+                            bot.uploadImage(
+                                mapRenderer
+                                    .dataPath
+                                    .resolve(if (name.endsWith(".png")) name else "$name.png")
+                                    .toFile()
+                            )
+                        }
                     }
                 }
             }
